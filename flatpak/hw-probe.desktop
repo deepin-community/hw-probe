@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+StartupNotify=true
+Name=Hardware Probe
+Comment=Probe for hardware, check operability and find drivers
+Icon=org.linux_hardware.hw-probe
+Exec=hw-probe
+Categories=Utility;Development;System;
+Keywords=HW Probe;Hardware;Probe;

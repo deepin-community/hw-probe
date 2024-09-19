@@ -1,0 +1,14 @@
+Description: As reported by lintian
+ incorrect-path-for-interpreter /usr/bin/env perl != /usr/bin/perl [usr/bin/hw-probe]
+Author: Mathieu Malaterre <malat@debian.org>
+Forwarded: not-needed
+Last-Update: 2021-12-14
+
+--- hw-probe-1.6.orig/hw-probe.pl
++++ hw-probe-1.6/hw-probe.pl
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env perl
++#!/usr/bin/perl
+ #####################################################################
+ # Hardware Probe 1.6
+ # A tool to probe for hardware, check operability and find drivers
