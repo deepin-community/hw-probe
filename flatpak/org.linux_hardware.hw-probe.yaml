@@ -1,0 +1,534 @@
+app-id: org.linux_hardware.hw-probe
+runtime: org.kde.Platform
+runtime-version: "6.2"
+sdk: org.kde.Sdk
+command: hw-probe
+finish-args:
+  - --share=network
+  - --device=all
+  - --filesystem=host:ro
+  - --filesystem=/var/log:ro
+  - --filesystem=/sys:ro
+  - --filesystem=/dev
+  - --socket=wayland
+  - --socket=x11
+  - --env=PATH=/usr/bin:/bin:/usr/sbin:/sbin:/app/bin:/app/sbin
+  - --env=PERL5LIB=/app/share/perl5:/app/lib/x86_64-linux-gnu/perl-base:/app/lib/i386-linux-gnu/perl-base
+  - --env=LD_LIBRARY_PATH=/app/lib/x86_64-linux-gnu/:/app/lib/i386-linux-gnu/:/app/lib64:/app/lib
+  - --env=LC_ALL=C
+cleanup:
+  - /include
+  - /man
+  - /share/doc
+  - /share/man
+  - /share/hwinfo
+  - /share/pkgconfig
+  - /share/usb.ids.gz
+  - /share/smartmontools
+  - /share/smartd.service
+  - /share/PERL5_BASE
+  - /share/automake*
+  - /share/info
+  - /share/aclocal*
+  - /share/libtool
+  - /sbin/check_hd
+  - /sbin/convert_hd
+  - /sbin/fancontrol
+  - /sbin/getsysinfo
+  - /sbin/isadump
+  - /sbin/isaset
+  - /sbin/mk_isdnhwdb
+  - /sbin/ownership
+  - /sbin/pwmconfig
+  - /sbin/sensors-detect
+  - /sbin/setpci
+  - /sbin/update-pciids
+  - /sbin/update-usbids.sh
+  - /sbin/vpddecode
+  - /sbin/smartd
+  - /sbin/update-smart-drivedb
+  - /lib64/pkgconfig
+  - /lib/pkgconfig
+  - /lib/debug
+  - /lib/libltdl*
+  - /bin/acpibin
+  - /bin/acpiexamples
+  - /bin/acpiexec
+  - /bin/acpihelp
+  - /bin/acpinames
+  - /bin/acpisrc
+  - /bin/kmod
+  - /bin/lsusb.py
+  - /bin/sensors-conf-convert
+  - /bin/usbhid-dump
+  - /bin/lex
+  - /bin/automake*
+  - /bin/aclocal*
+  - /bin/libtool*
+  - /etc/init.d
+  - /etc/smartd_warning.d
+  - /etc/sensors.d
+  - /etc/smartd.conf
+  - /etc/smartd_warning.sh
+  - /var/lib
+  - /lib/*.a
+  - /lib/*.la
+  - /usr
+modules:
+  - name: automake
+    buildsystem: simple
+    build-commands:
+      - ./configure --prefix=$FLATPAK_DEST
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - make install
+    sources:
+      - type: archive
+        url: https://ftp.gnu.org/gnu/automake/automake-1.15.tar.xz
+        sha256: 9908c75aabd49d13661d6dcb1bc382252d22cc77bf733a2d55e87f2aa2db8636
+  - name: libtool
+    buildsystem: simple
+    build-commands:
+      - ./configure --prefix=$FLATPAK_DEST
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - make install
+    sources:
+      - type: archive
+        url: https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.xz
+        sha256: 7c87a8c2c8c0fc9cd5019e402bed4292462d00a718a7cd5f11218153bf28b26f
+  - name: edid-decode
+    buildsystem: simple
+    build-commands:
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - make install DESTDIR=$FLATPAK_DEST bindir=/bin mandir=/share/man
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.4/edid-decode-20180622.tar.gz
+        sha256: ab44c58a3712beca8ffa0ac937dc24d337cb0ecd18e703b4ddf3a10b0df35e1e
+  - name: dmidecode
+    buildsystem: simple
+    build-commands:
+      - sed -i -e 's/ -O2/ -s -O2/' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install prefix=/ DESTDIR=$FLATPAK_DEST
+    sources:
+      - type: archive
+        url: https://download-mirror.savannah.gnu.org/releases/dmidecode/dmidecode-3.4.tar.xz
+        sha256: 43cba851d8467c9979ccdbeab192eb6638c7d3a697eba5ddb779da8837542212
+  - name: iproute2
+    buildsystem: simple
+    build-commands:
+      - ./configure --prefix=/
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - install -D ./ip/ip $FLATPAK_DEST/sbin/ip
+    sources:
+      - type: archive
+        url: https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-5.9.0.tar.xz
+        sha256: a25dac94bcdcf2f73316c7f812115ea7a5710580bad892b08a83d00c6b33dacf
+  - name: lm-sensors
+    buildsystem: simple
+    build-commands:
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install BUILD_STATIC_LIB=0 DEBUG=0 PREFIX=/ DESTDIR=$FLATPAK_DEST
+    sources:
+      - type: archive
+        url: https://github.com/lm-sensors/lm-sensors/archive/V3-6-0.tar.gz
+        sha256: 0591f9fa0339f0d15e75326d0365871c2d4e2ed8aa1ff759b3a55d3734b7d197
+  - name: libkmod
+    buildsystem: simple
+    build-commands:
+      - ./configure --disable-debug --disable-python --disable-logging --disable-test-modules --disable-manpages --prefix=/
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install DESTDIR=$FLATPAK_DEST
+      - install -D ./tools/lsmod $FLATPAK_DEST/bin/lsmod
+    sources:
+      - type: archive
+        url: https://cdn.kernel.org/pub/linux/utils/kernel/kmod/kmod-12.tar.xz
+        sha256: c6189dd8c5a1e8d9224e8506bd188c0cd5dfa119fd6b7e5869b3640cbe8bf92f
+  - name: libusb-1
+    buildsystem: simple
+    build-commands:
+      - NOCONFIGURE=1 sh autogen.sh
+      - ./configure --disable-static --disable-udev --prefix=/
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install DESTDIR=$FLATPAK_DEST
+    sources:
+      - type: archive
+        url: https://github.com/libusb/libusb/archive/v1.0.22.tar.gz
+        sha256: 3500f7b182750cd9ccf9be8b1df998f83df56a39ab264976bdb3307773e16f48
+  - name: usbutils
+    buildsystem: simple
+    build-commands:
+      - sed -i -e 's/usbhid-dump//' Makefile.*
+      - ./configure --prefix=/ LIBUSB_CFLAGS='-I'$FLATPAK_DEST'/include/libusb-1.0' LIBUSB_LIBS='-L'$FLATPAK_DEST'/lib64 -L'$FLATPAK_DEST'/lib -lusb-1.0'
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install DESTDIR=$FLATPAK_DEST
+      - sed -i -e 's|/share/usb.ids|/var/tmp/P_USB|' $FLATPAK_DEST/bin/lsusb
+    sources:
+      - type: archive
+        url: https://mirrors.edge.kernel.org/pub/linux/utils/usb/usbutils/usbutils-007.tar.xz
+        sha256: 7593a01724bbc0fd9fe48e62bc721ceb61c76654f1d7b231b3c65f6dfbbaefa4
+  - name: pciutils
+    buildsystem: simple
+    build-commands:
+      - make install PREFIX=/ DESTDIR=$FLATPAK_DEST SHARED=no LIBKMOD=no HWDB=no ZLIB=no DNS=no
+      - sed -i -e 's|/share/pci.ids|/var/tmp/P_PCI|' $FLATPAK_DEST/sbin/lspci
+    sources:
+      - type: archive
+        url: https://github.com/pciutils/pciutils/archive/v3.6.2.tar.gz
+        sha256: d84d7096a71890f0ddddc50e88ac5a3bc7412bf48d8100fc15857a411564687d
+  - name: acpica-unix
+    buildsystem: simple
+    build-commands:
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - make install DESTDIR=$FLATPAK_DEST PREFIX=/
+    sources:
+      - type: archive
+        url: https://acpica.org/sites/acpica/files/acpica-unix-20220331.tar.gz
+        sha256: acaff68b14f1e0804ebbfc4b97268a4ccbefcfa053b02ed9924f2b14d8a98e21
+  - name: hdparm
+    buildsystem: simple
+    build-commands:
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - make install DESTDIR=`pwd`/INST
+      - install -D INST/sbin/hdparm $FLATPAK_DEST/sbin/hdparm
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.6/hdparm-9.65.tar.gz
+        sha256: d14929f910d060932e717e9382425d47c2e7144235a53713d55a94f7de535a4b
+  - name: smartmontools
+    buildsystem: simple
+    build-commands:
+      - NOCONFIGURE=1 sh autogen.sh
+      - ./configure --with-nvme-devicescan --prefix=/ --with-systemdsystemunitdir=/share
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install DESTDIR=$FLATPAK_DEST
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.6/smartmontools-7.3.tar.gz
+        sha256: a544f8808d0c58cfb0e7424ca1841cb858a974922b035d505d4e4c248be3a22b
+  - name: util-linux
+    buildsystem: simple
+    build-commands:
+      - ./configure --prefix=/
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS dmesg
+      - make -j $FLATPAK_BUILDER_N_JOBS lscpu
+      - make -j $FLATPAK_BUILDER_N_JOBS lsblk
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - install -D ./dmesg $FLATPAK_DEST/bin/dmesg
+      - install -D ./lscpu $FLATPAK_DEST/bin/lscpu
+      - install -D ./lsblk $FLATPAK_DEST/bin/lsblk
+    sources:
+      - type: archive
+        url: https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.38/util-linux-2.38.1.tar.xz
+        sha256: 60492a19b44e6cf9a3ddff68325b333b8b52b6c59ce3ebd6a0ecaa4c5117e84f
+  - name: libx86emu
+    buildsystem: simple
+    build-commands:
+      - echo '3.5' > VERSION
+      - rm -f git2log
+      - sed -i -e 's/ -g / -s /' Makefile
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - make install DESTDIR=`pwd`/INST
+      - cp -fr INST/usr/* $FLATPAK_DEST/
+    sources:
+      - type: archive
+        url: https://github.com/wfeldt/libx86emu/archive/3.5.tar.gz
+        sha256: 91da55f5da55017d5a80e2364de30f9520aa8df2744ff587a09ba58d6e3536c8
+  - name: lex
+    buildsystem: simple
+    build-commands:
+      - NOCONFIGURE=1 sh autogen.sh
+      - ./configure
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - install -D src/flex $FLATPAK_DEST/bin/lex
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.4/flex-20181004.tar.gz
+        sha256: bd7d248de7792dd2de2089a16b7ea60f94b2056e721e1f0f1b28083f4792e902
+  - name: perl-uri
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/E/ET/ETHER/URI-5.08.tar.gz
+        sha256: 7e2c6fe3b1d5947da334fa558a96e748aaa619213b85bcdce5b5347d4d26c46e
+  - name: perl-http-message
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/O/OA/OALDERS/HTTP-Message-6.37.tar.gz
+        sha256: 0e59da0a85e248831327ebfba66796314cb69f1bfeeff7a9da44ad766d07d802
+  - name: perl-net-http
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/O/OA/OALDERS/Net-HTTP-6.22.tar.gz
+        sha256: 62faf9a5b84235443fe18f780e69cecf057dea3de271d7d8a0ba72724458a1a2
+  - name: perl-try-tiny
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/E/ET/ETHER/Try-Tiny-0.31.tar.gz
+        sha256: 3300d31d8a4075b26d8f46ce864a1d913e0e8467ceeba6655d5d2b2e206c11be
+  - name: perl-lwp-mediatypes
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/G/GA/GAAS/LWP-MediaTypes-6.02.tar.gz
+        sha256: 18790b0cc5f0a51468495c3847b16738f785a2d460403595001e0b932e5db676
+  - name: perl-http-date
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/G/GA/GAAS/HTTP-Date-6.02.tar.gz
+        sha256: e8b9941da0f9f0c9c01068401a5e81341f0e3707d1c754f8e11f42a7e629e333
+  - name: perl-timedate
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/G/GB/GBARR/TimeDate-2.30.tar.gz
+        sha256: 75bd254871cb5853a6aa0403ac0be270cdd75c9d1b6639f18ecba63c15298e86
+  - name: libwww-perl
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/E/ET/ETHER/libwww-perl-6.36.tar.gz
+        sha256: 75c034ab4b37f4b9506dc644300697505582cf9545bcf2e2079e7263f675290a
+  - name: perl-parent
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/C/CO/CORION/parent-0.238.tar.gz
+        sha256: 38f58fdef3e28a194c9c8d0dc5d02672faf93c069f40c5bcb1fabeadbbc4d2d1
+  - name: perl-time-local
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/SITELIB/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/Time-Local-1.30.tar.gz
+        sha256: c7744f6b2986b946d3e2cf034df371bee16cdbafe53e945abb1a542c4f8920cb
+  - name: perl-data-dumper
+    buildsystem: simple
+    build-commands:
+      - perl Makefile.PL
+      - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+      - chmod 777 -R ./INST
+      - find ./INST -type f | perl -lne 'print if -B and -x' | xargs strip
+      - mkdir -p $FLATPAK_DEST/share/perl5/
+      - cp -fr ./INST/usr/lib/perl5/*/* $FLATPAK_DEST/share/perl5/
+    sources:
+      - type: archive
+        url: https://cpan.metacpan.org/authors/id/S/SM/SMUELLER/Data-Dumper-2.161.tar.gz
+        sha256: 3aa4ac1b042b3880438165fb2b2139d377564a8e9928ffe689ede5304ee90558
+  - name: PyQt6
+    buildsystem: simple
+    build-commands:
+      - sip-install
+        --confirm-license
+        --no-designer-plugin
+        --no-qml-plugin
+        --no-tools
+        --concatenate=1
+        --no-docstrings
+        --verbose
+        --qt-shared
+        --target-dir=/app/lib/python3.9/site-packages/
+        --enable=QtCore
+        --enable=QtGui
+        --enable=QtWidgets
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.6/PyQt6-6.2.3.tar.gz
+        sha256: a9bfcac198fe4b703706f809bb686c7cef5f60a7c802fc145c6b57929c7a6a34
+    modules:
+      - name: python3-sip
+        buildsystem: simple
+        build-commands:
+          - pip3 install --no-deps --no-use-pep517 --prefix=$FLATPAK_DEST .
+        sources:
+          - type: archive
+            url: https://github.com/linuxhw/build-stuff/releases/download/1.6/sip-6.5.1.tar.gz
+            sha256: 204f0240db8999a749d638a987b351861843e69239b811ec3d1881412c3706a6
+        modules:
+          - name: python-toml
+            buildsystem: simple
+            build-commands:
+                - pip3 install --no-deps --no-use-pep517 --prefix=$FLATPAK_DEST .
+            sources:
+                - type: archive
+                  url: https://files.pythonhosted.org/packages/source/t/toml/toml-0.10.0.tar.gz
+                  sha256: 229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c
+          - name: python-packaging
+            buildsystem: simple
+            build-commands:
+                - pip3 install --no-deps --no-use-pep517 --prefix=$FLATPAK_DEST .
+            sources:
+                - type: archive
+                  url: https://files.pythonhosted.org/packages/source/p/packaging/packaging-20.1.tar.gz
+                  sha256: e665345f9eef0c621aa0bf2f8d78cf6d21904eef16a93f020240b704a57f1334
+            cleanup:
+                - "*"
+      - name: PyQt6_sip
+        buildsystem: simple
+        build-commands:
+          - pip3 install --no-deps --no-use-pep517 --prefix=$FLATPAK_DEST .
+        sources:
+          - type: archive
+            url: https://github.com/linuxhw/build-stuff/releases/download/1.6/PyQt6_sip-13.2.1.tar.gz
+            sha256: b7bce59900b2e0a04f70246de2ccf79ee7933036b6b9183cf039b62eeae2b858
+      - name: python-pyparsing
+        buildsystem: simple
+        build-commands:
+          - pip3 install --no-deps --no-use-pep517 --prefix=$FLATPAK_DEST .
+        sources:
+          - type: archive
+            url: https://files.pythonhosted.org/packages/source/p/pyparsing/pyparsing-2.4.6.tar.gz
+            sha256: 4c830582a84fb022400b85429791bc551f1f4871c33f23e44f353119e92f969f
+        cleanup:
+          - "*"
+      - name: PyQt-builder
+        buildsystem: simple
+        build-commands:
+          - pip3 install --no-deps --no-use-pep517 --prefix=$FLATPAK_DEST .
+        sources:
+          - type: archive
+            url: https://files.pythonhosted.org/packages/8b/5f/1bd49787262ddce37b826ef49dcccf5a9970facf0ed363dee5ee233e681d/PyQt-builder-1.12.2.tar.gz
+            sha256: f62bb688d70e0afd88c413a8d994bda824e6cebd12b612902d1945c5a67edcd7
+        cleanup:
+        - "*"
+  - name: hwinfo
+    skip-arches:
+      - aarch64
+      - arm
+    buildsystem: simple
+    build-commands:
+      - echo '22.1' > VERSION
+      - rm -f git2log
+      - sed -i -e 's/ -g / -s /' Makefile.common
+      - CFLAGS='-I'$FLATPAK_DEST'/include' LDFLAGS='-L'$FLATPAK_DEST'/lib64 -L'$FLATPAK_DEST'/lib -lx86emu' LD_LIBRARY_PATH=$FLATPAK_DEST'/lib64:'$FLATPAK_DEST'/lib' make
+      - make install DESTDIR=`pwd`/INST
+      - cp -fr INST/usr/* $FLATPAK_DEST/
+    sources:
+      - type: archive
+        url: https://github.com/openSUSE/hwinfo/archive/22.1.tar.gz
+        sha256: 58fd8ed9b704e4622f5ae28e0b240f905516c255c7d2695169fb2b9dd6d549a9
+  - name: hwinfo
+    only-arches:
+      - aarch64
+      - arm
+    buildsystem: simple
+    build-commands:
+      - echo '22.1' > VERSION
+      - rm -f git2log
+      - sed -i -e 's/ -g / -s /' Makefile.common
+      - make
+      - make install DESTDIR=`pwd`/INST
+      - cp -fr INST/usr/* $FLATPAK_DEST/
+    sources:
+      - type: archive
+        url: https://github.com/openSUSE/hwinfo/archive/22.1.tar.gz
+        sha256: 58fd8ed9b704e4622f5ae28e0b240f905516c255c7d2695169fb2b9dd6d549a9
+  - name: hw-probe
+    buildsystem: simple
+    build-commands:
+      - make install DESTDIR=$FLATPAK_DEST prefix=/
+      - mv $FLATPAK_DEST/bin/hw-probe $FLATPAK_DEST/bin/hw-probe-flatpak
+      - install -m 777 -D flatpak/hw-probe.sh $FLATPAK_DEST/bin/hw-probe
+      - install -D flatpak/PERL5_BASE $FLATPAK_DEST/share/PERL5_BASE
+      - install -D flatpak/hw-probe.appdata.xml $FLATPAK_DEST/share/metainfo/org.linux_hardware.hw-probe.appdata.xml
+      - install -D flatpak/icon-256x256.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/org.linux_hardware.hw-probe.png
+      - install -D flatpak/icon-128x128.png $FLATPAK_DEST/share/icons/hicolor/128x128/apps/org.linux_hardware.hw-probe.png
+      - install -D flatpak/icon-64x64.png $FLATPAK_DEST/share/icons/hicolor/64x64/apps/org.linux_hardware.hw-probe.png
+      - install -D flatpak/hw-probe.desktop $FLATPAK_DEST/share/applications/org.linux_hardware.hw-probe.desktop
+      - install -D flatpak/usb.ids $FLATPAK_DEST/share/usb.ids
+      - install -D flatpak/pci.ids $FLATPAK_DEST/share/pci.ids
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.6/hw-probe-1.6-AI.tar.gz
+        sha256: 8a826d0d36f594542699d26d63b7ce14761f9f0c8bc932429082a120843c637d
+  - name: hw-probe-pyqt6-gui
+    buildsystem: simple
+    build-commands:
+      - mkdir -p $FLATPAK_DEST/share/hw-probe-pyqt6-gui/
+      - mv Resources Hardware\ Probe $FLATPAK_DEST/share/hw-probe-pyqt6-gui/
+      - ln -s $FLATPAK_DEST/share/hw-probe-pyqt6-gui/Hardware\ Probe $FLATPAK_DEST/bin/hw-probe-pyqt6-gui
+      - chmod 777 $FLATPAK_DEST/bin/hw-probe-pyqt6-gui
+    sources:
+      - type: archive
+        url: https://github.com/linuxhw/build-stuff/releases/download/1.6/hw-probe-pyqt6-gui-1.0-AI.tar.gz
+        sha256: 3a0a09d486a3b813397689e7de2df84b3132e7dab3d6dcda76cc19298b082c9c
+  - name: perl-base
+    buildsystem: simple
+    build-commands:
+      - sh Configure -de -Dprefix=/
+      - make -j $FLATPAK_BUILDER_N_JOBS
+      - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+      - install -D ./perl $FLATPAK_DEST/bin/perl
+      - cd lib && cat $FLATPAK_DEST/share/PERL5_BASE | while read i; do mkdir -p $FLATPAK_DEST/share/perl5/`dirname $i`; cp -fr $i $FLATPAK_DEST/share/perl5/$i; done
+    sources:
+      - type: archive
+        url: https://www.cpan.org/src/5.0/perl-5.36.0.tar.xz
+        sha256: 0f386dccbee8e26286404b2cca144e1005be65477979beb9b1ba272d4819bcf0

@@ -1,0 +1,208 @@
+app: hw-probe
+
+build:
+  packages:
+    - tar
+    - gcc
+    - make
+    - flex
+    - bison
+    - gcc-c++
+    - automake
+    - Mesa-libGL-devel
+    - glew-devel
+    - glu-devel
+    - libusb-1_0-devel
+    - libudev-devel
+    - libkmod-devel
+    - libuuid-devel
+    - glib2-devel
+    - libXrandr-devel
+    - zlib-devel
+
+script:
+  # edid-decode
+  - tar -xf $BUILD_SOURCE_DIR/edid-decode-20200211.tar.xz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/edid-decode-20200211
+  - sed -i -e 's/ -g / -s /' Makefile
+  - CPPFLAGS='-std=c++0x' make
+  - make install DESTDIR=$BUILD_APPDIR
+  # ddcutil
+  - tar -xf $BUILD_SOURCE_DIR/ddcutil-20200218.tar.xz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/ddcutil-20200218
+  - ./configure --prefix=/usr ZLIB_LIBS="-lz"
+  - sed -i -e 's/ -g / -s /' Makefile
+  - make
+  - install -D ./src/ddcutil $BUILD_APPDIR/usr/bin/ddcutil
+  # dmidecode
+  - tar -xf $BUILD_SOURCE_DIR/dmidecode-3.4.tar.xz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/dmidecode-3.4
+  - sed -i -e 's/ -O2/ -s -O2/' Makefile
+  - make
+  - make install prefix=/usr DESTDIR=$BUILD_APPDIR
+  # lm_sensors
+  - tar -xf $BUILD_SOURCE_DIR/lm-sensors-3-6-0.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/lm-sensors-3-6-0
+  - sed -i -e 's/ -g/ -s/' Makefile
+  - make install BUILD_STATIC_LIB=0 DEBUG=0 PREFIX=/usr DESTDIR=$BUILD_APPDIR
+  # libkmod
+  - tar -xf $BUILD_SOURCE_DIR/kmod-12.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/kmod-12
+  - ./configure --disable-debug --disable-python --disable-logging --disable-tools --disable-test-modules --disable-manpages --prefix=/usr
+  - sed -i -e 's/ -g / -s /' Makefile
+  - make
+  - make install DESTDIR=$BUILD_APPDIR
+  # usbutils
+  - tar -xf $BUILD_SOURCE_DIR/usbutils-007.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/usbutils-007
+  - cp -f $BUILD_SOURCE_DIR/usb.ids .
+  - ./configure --prefix=/usr
+  - sed -i -e 's/ -g / -s /' Makefile
+  - make
+  - make install DESTDIR=$BUILD_APPDIR
+  - sed -i -e 's|/usr|././|g' $BUILD_APPDIR/usr/bin/lsusb
+  # pciutils
+  - tar -xf $BUILD_SOURCE_DIR/pciutils-3.6.2.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/pciutils-3.6.2
+  - cp -f $BUILD_SOURCE_DIR/pci.ids .
+  - make install PREFIX=/usr DESTDIR=$BUILD_APPDIR SHARED=no LIBKMOD=yes HWDB=no ZLIB=no DNS=no
+  - sed -i -e 's|/usr|././|g' $BUILD_APPDIR/usr/sbin/lspci
+  # acpica-unix
+  - tar -xf $BUILD_SOURCE_DIR/acpica-unix-20220331.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/acpica-unix-20220331
+  - make
+  - make install DESTDIR=$BUILD_APPDIR
+  # hdparm
+  - tar -xf $BUILD_SOURCE_DIR/hdparm-9.65.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/hdparm-9.65
+  - make
+  - make install DESTDIR=$BUILD_APPDIR
+  # smartmontools
+  - tar -xf $BUILD_SOURCE_DIR/smartmontools-7.3.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/smartmontools-7.3
+  - NOCONFIGURE=1 NO_CONFIGURE=1 sh autogen.sh
+  - ./configure --with-nvme-devicescan --prefix=/usr
+  - sed -i -e 's/ -g / -s /' Makefile
+  - make
+  - make install DESTDIR=$BUILD_APPDIR
+  # libx86emu
+  - tar -xf $BUILD_SOURCE_DIR/libx86emu-3.5.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/libx86emu-3.5
+  - echo '3.5' > VERSION
+  - rm -f git2log
+  - sed -i -e 's/ -g / -s /' Makefile
+  - make
+  - make install DESTDIR=$BUILD_APPDIR
+  # mesa-demos
+  - tar -xf $BUILD_SOURCE_DIR/mesa-demos-8.1.0.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/mesa-demos-8.1.0
+  - ./configure --prefix=/usr
+  - sed -i -e 's/-lGLEW//' Makefile src/xdemos/Makefile
+  - make
+  - cp -fr ./src/xdemos/{glxgears,glxinfo} $BUILD_APPDIR/usr/bin/
+  # hwinfo
+  - tar -xf $BUILD_SOURCE_DIR/hwinfo-22.1.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/hwinfo-22.1
+  - echo '22.1' > VERSION
+  - rm -f git2log
+  - sed -i -e 's/ -g / -s /' Makefile.common
+  - CFLAGS="-I$BUILD_APPDIR/usr/include -std=gnu99" LDFLAGS="-L$BUILD_APPDIR/usr/lib64 -L$BUILD_APPDIR/usr/lib -lx86emu" LD_LIBRARY_PATH="$BUILD_APPDIR/usr/lib64:$BUILD_APPDIR/usr/lib" make
+  - make install DESTDIR=$BUILD_APPDIR
+  # hw-probe
+  - tar -xf $BUILD_SOURCE_DIR/hw-probe-1.6-AI.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/hw-probe-1.6-AI
+  - make install prefix=$BUILD_APPDIR/usr
+  # create Perl5 directory
+  - mkdir -p $BUILD_APPDIR/usr/lib/perl5
+  # perl-URI
+  - tar -xf $BUILD_SOURCE_DIR/URI-5.08.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/URI-5.08
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-HTTP-Message
+  - tar -xf $BUILD_SOURCE_DIR/HTTP-Message-6.37.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/HTTP-Message-6.37
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-Net-HTTP
+  - tar -xf $BUILD_SOURCE_DIR/Net-HTTP-6.22.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/Net-HTTP-6.22
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-Try-Tiny
+  - tar -xf $BUILD_SOURCE_DIR/Try-Tiny-0.31.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/Try-Tiny-0.31
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-LWP-MediaTypes
+  - tar -xf $BUILD_SOURCE_DIR/LWP-MediaTypes-6.02.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/LWP-MediaTypes-6.02
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-HTTP-Date
+  - tar -xf $BUILD_SOURCE_DIR/HTTP-Date-6.02.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/HTTP-Date-6.02
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-TimeDate
+  - tar -xf $BUILD_SOURCE_DIR/TimeDate-2.30.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/TimeDate-2.30
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # libwww-perl
+  - tar -xf $BUILD_SOURCE_DIR/libwww-perl-6.36.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/libwww-perl-6.36
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-parent
+  - tar -xf $BUILD_SOURCE_DIR/parent-0.238.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/parent-0.238
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-Time-Local
+  - tar -xf $BUILD_SOURCE_DIR/Time-Local-1.30.tar.gz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/Time-Local-1.30
+  - perl Makefile.PL
+  - make install DESTDIR=`pwd`/INST INSTALLSITELIB=/SITELIB
+  - cp -fr ./INST/SITELIB/* $BUILD_APPDIR/usr/lib/perl5/
+  # perl-base
+  - tar -xf $BUILD_SOURCE_DIR/perl-5.36.0.tar.xz -C $BUILD_SOURCE_DIR
+  - cd $BUILD_SOURCE_DIR/perl-5.36.0
+  - sh Configure -de -Dprefix=/
+  - sed -i -e 's/ -lnsl / /' Makefile
+  - make
+  - install -D ./perl $BUILD_APPDIR/usr/bin/perl
+  - cd lib && cat $BUILD_SOURCE_DIR/PERL5_BASE | while read i; do mkdir -p $BUILD_APPDIR/usr/lib/perl5/`dirname $i`; cp -fr $i $BUILD_APPDIR/usr/lib/perl5/$i; done
+  # meta info
+  - mkdir -p $BUILD_APPDIR/usr/share/metainfo/
+  - cp -f $BUILD_SOURCE_DIR/hw-probe.appdata.xml $BUILD_APPDIR/usr/share/metainfo/
+  - cp -f $BUILD_SOURCE_DIR/hw-probe.desktop $BUILD_APPDIR/
+  - cp -f $BUILD_SOURCE_DIR/hw-probe.png $BUILD_APPDIR/
+  # remove unused files
+  - cd $BUILD_APPDIR
+  # header files
+  - rm -fr usr/include
+  # binaries
+  - rm -fr usr/bin/{lsusb.py,acpibin,acpiexamples,acpiexec,acpihelp,acpinames,acpisrc,usbhid-dump,sensors-conf-convert}
+  - rm -fr usr/sbin/{convert_hd,update-usbids.sh,check_hd,mk_isdnhwdb,getsysinfo,fancontrol,pwmconfig,update-pciids,isadump,isaset,ownership,setpci,vpddecode,sensors-detect,update-smart-drivedb,smartd}
+  # configs
+  - rm -fr usr/lib/{pkgconfig,systemd,libkmod.la}
+  - rm -fr usr/lib64/pkgconfig
+  - rm -fr etc/{sensors.d,smartd*,zypp}
+  - rm -fr usr/share/{hwinfo,man,doc,pkgconfig,cmake,ddcutil,smartmontools,usb.ids.gz}
+  - rm -fr usr/etc
+  # other
+  - rm -fr var share usr/man
+  - rm -fr usr/lib/perl5/libwww/*.pod
+  # strip binaries
+  - find . -type f | perl -lne 'print if -B and -x' | xargs strip
+  

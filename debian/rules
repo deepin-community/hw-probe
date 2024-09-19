@@ -2,3 +2,15 @@
 
 %:
 	dh $@
+
+debian/hw-probe.1: debian/hw-probe.1.in
+	help2man --include=$< --output=$@ --no-info debian/hw-probe/usr/bin/hw-probe
+
+override_dh_clean:
+	dh_clean debian/hw-probe.1
+
+override_dh_installdocs: debian/hw-probe.1
+	dh_installdocs
+
+get-orig-source:
+	uscan --download --force-download --rename
